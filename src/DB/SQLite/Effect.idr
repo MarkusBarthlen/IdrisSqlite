@@ -538,36 +538,27 @@ executeSelect : (db_name : String) -> (q : String) -> List (Int, DBVal) ->
                 { [SQLITE ()] } Eff (Either QueryError ResultSet)
 executeSelect db_name q bind_vals fn =
   do Right () <- call $ OpenDB db_name | Left err => return (Left err)
-     case !(call (PrepareStatement q)) of 
-       Left err => do 
-          cleanupPSFail
-          return $ Left err
-       Right () => do                                                
-          case !(multiBind bind_vals) of
-            Just err => do 
-              cleanupBindFail
-              return $ Left err
-            Nothing => do 
-              case !executeStatement of
-                Unstarted => do 
-                         res <- collectResults fn
-                         finalise
-                         closeDB
-                         return $ Right res
-                StepFail => do 
-                        res <- collectResults fn
-                        finalise
-                        closeDB
-                        return $ Right res
-                StepComplete => do 
-                            res <- collectResults fn
-                            finalise
-                            closeDB
-                            return $ Right res
-                NoMoreRows => do 
+     Right () <- call $ PrepareStatement q | Left err => do 
+                                                     cleanupPSFail
+                                                     return $ Left err
+     Nothing <- multiBind bind_vals | Just err => do cleanupBindFail
+                                                     return $ Left err
+     case !executeStatement of
+       Unstarted => do res <- collectResults fn
+                       finalise
+                       closeDB
+                       return $ Right res
+       StepFail => do res <- collectResults fn
+                      finalise
+                      closeDB
+                      return $ Right res
+       StepComplete => do res <- collectResults fn
                           finalise
                           closeDB
-                          return $ Right []
+                          return $ Right res
+       NoMoreRows => do finalise
+                        closeDB
+                        return $ Right []
 
 -- -}
 -- -}
