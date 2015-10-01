@@ -1,6 +1,6 @@
 module Provider
 
-import public Providers
+import public Prelude.Providers
 
 import DB.SQLite.Effect
 import DB.SQLite.SQLiteCodes
@@ -50,8 +50,8 @@ getRow s = go 0 s
                 getCol (NULLABLE x) = do nullp <- isColumnNull i
                                          if nullp
                                            then pure Nothing
-                                           else do val <- getCol x
-                                                   pure (Just val)
+                                           else do 
+                                                  pure (Just !(getCol x))
 
 collectRows : (s : Schema) -> { [SQLITE (SQLiteExecuting ValidRow)] ==>
                                 [SQLITE (SQLiteExecuting InvalidRow)] } Eff (Table s)
@@ -65,10 +65,10 @@ collectRows s = do row <- getRow s
 query : {file : String} -> {db : DB file} -> Query db s ->
         { [SQLITE ()] } Eff (Either QueryError (Table s))
 query {file=fn} q =
-  case !(openDB fn) of
+  case !(call $ OpenDB fn) of
     Left err => pure $ Left err
     Right () =>  -- FIXME should really use binding
-      case !(prepareStatement (compileQuery q)) of
+      case !(call $ PrepareStatement (compileQuery q)) of
         Left err => do cleanupPSFail
                        pure $ Left err
         Right () =>

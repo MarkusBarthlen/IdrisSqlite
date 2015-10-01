@@ -1,4 +1,5 @@
 package demo
 
 opts = "-p effects -p sqlite -p lightyear"
+modules = Database, ErrorHandlers, Parser, ParserHack, Provider, Queries, SQLiteTypes, Schema, Test
 
