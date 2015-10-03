@@ -1,9 +1,12 @@
 module Parser
 
 import Lightyear.Core
+import Lightyear.Char
 import Lightyear.Strings
 import Lightyear.Combinators
 import Queries
+import SQLiteTypes
+import Schema
 
 sqltype : Parser SQLiteType
 sqltype = the (Parser _) $
@@ -32,13 +35,13 @@ sqlCol = do n <- name
             null <- nullable
             pure (n:::(if null then NULLABLE ty else ty))
 
-comma : Parser ()
+comma : Parser Char
 comma = char ','
 
 
 cols : Parser Schema
-cols = do cols <- sepBy sqlCol (space $> comma $> space)
-          pure (toSchema cols)
+cols = do  
+          pure (toSchema !(sepBy sqlCol (space *> Parser.comma *> space)))
   where toSchema : List Attribute -> Schema
         toSchema [] = []
         toSchema (x::xs) = x :: toSchema xs
