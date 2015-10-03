@@ -62,10 +62,11 @@ collectRows s = do row <- getRow s
                      StepComplete => pure $ row :: !(collectRows s)
                      NoMoreRows => pure [row]
 
-query : {file : String} -> {db : DB file} -> Query db s ->
+
+query :  {db : DB "test.sqlite"} -> Query db s ->
         { [SQLITE ()] } Eff (Either QueryError (Table s))
-query {file=fn} q =
-  case !(call $ OpenDB fn) of
+query q =
+  case !(call $ OpenDB "test.sqlite") of
     Left err => pure $ Left err
     Right () =>  -- FIXME should really use binding
       case !(call $ PrepareStatement (compileQuery q)) of

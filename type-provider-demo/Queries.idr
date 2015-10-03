@@ -88,6 +88,7 @@ namespace Expr
 
 
 namespace Query
+
   %reflection
   reflectListPrf : List a -> Tactic
   reflectListPrf [] = Refine "Here" `Seq` Solve
@@ -107,7 +108,7 @@ namespace Query
   solveHasTable (HasTable (x ++ y) n s) = Solve
 
 
-  data Tables : DB file -> Schema -> Type where
+  data Tables : {file : String} -> DB file -> Schema -> Type where
     T : (name : String) ->
         {default tactics { byReflection solveHasTable;}
          ok : HasTable db name s} ->
@@ -126,34 +127,34 @@ namespace Query
              Tables (MkDB name db) s
   toTables tbl {ok = ok} = T tbl {ok = ok}
 
-  compileTables : {db : DB f} -> Tables db s -> String
+  compileTables : {db : DB "test.sqlite"} -> Tables db s -> String
   compileTables (T n) = n
   compileTables (x * y) = x ++ ", " ++ compileTables y
 
-  data Cmd : DB f -> Type where
+  data Cmd : DB "test.sqlite" -> Type where
     Insert : (into : String) -> (s : Schema) ->
              {default tactics { byReflection solveHasTable; }
               ok : HasTable db into s} ->
              (values : Table s) ->
-             Cmd (MkDB f db)
+             Cmd (MkDB "test.sqlite" db)
     Delete : (from : String) -> (s : Schema) ->
              {default tactics { byReflection solveHasTable;}
               ok : HasTable db from s} ->
              (when : Expr s INTEGER) ->
-             Cmd (MkDB f db)
+             Cmd (MkDB "test.sqlite" db)
 
   syntax INSERT INTO [table] AS [schema] VALUES [values] = Insert table schema values
   syntax DELETE FROM [table] AS [schema] WHEN [when] = Delete table schema when
 
 
-  data Query : DB f -> Schema -> Type where
-    Select : {db : DB f} -> Tables db s -> Expr s INTEGER -> (s' : Schema) ->
+  data Query : DB "test.sqlite" -> Schema -> Type where
+    Select : {db : DB "test.sqlite"} -> Tables db s -> Expr s INTEGER -> (s' : Schema) ->
              {auto ok : SubSchema s' s} ->
              Query db s'
 
   syntax SELECT [schema] FROM [tables] WHERE [expr] = Select tables expr schema
 
-  compileQuery : {db : DB f} -> Query db proj -> String
+  compileQuery : {db : DB "test.sqlite"} -> Query db proj -> String
   compileQuery (Select ts expr proj) = "SELECT " ++
                                        cols ++
                                        " FROM " ++
