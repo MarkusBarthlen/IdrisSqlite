@@ -17,12 +17,9 @@ import SQLiteTypes
 %lib C "sqlite3"
 
 
-
-
-%provide (db : DB "test.sqlite")
-  with run (getSchemas "test.sqlite")
-
-
+provideDB : IO (Provider (DB "test.sqlite"))
+provideDB = run (getSchemas "test.sqlite")
+%provide (db : DB "test.sqlite") with provideDB
 
 speakers : Query db ["name":::TEXT, "bio":::NULLABLE TEXT]
 speakers = SELECT ["name":::TEXT, "bio":::NULLABLE TEXT]

@@ -20,15 +20,19 @@ import SQLiteTypes
 %lib C "sqlite3"
 
 
+provideDB : IO (Provider (DB "test.sqlite"))
+provideDB = run (getSchemas "test.sqlite")
 
 
-%provide (db : DB "test.sqlite") with run (getSchemas "test.sqlite")
+
+%provide (db : DB "test.sqlite") with provideDB
 
 %error_handlers Col    ok hasColErr
 %error_handlers Select ok notSubSchemaErr
 
 speakers : Query db ["name":::TEXT, "bio":::TEXT]
 speakers = SELECT ["name":::TEXT, "bio":::TEXT] FROM "speaker" WHERE 1
+
 
 -- :x unsafePerformIO $ run $ query speakers
 
